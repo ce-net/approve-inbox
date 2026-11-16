@@ -21,7 +21,7 @@ struct State {
 async fn bundles() -> Result<(Vec<gb::Bundle>, String), String> {
     let tok = ui_chain::source_token::<gb::GrantBundle>(&["grant.bundle:read"], 60, None)?;
     let mut c = ce_wire::Client::<gb::GrantBundle>::by_name(tok).await.map_err(|e| e.to_string())?;
-    c.deadline = Duration::from_secs(8);
+    c.deadline = Duration::from_secs(20);
     let list = c.call::<gb::List>(&()).await.map_err(|e| e.to_string())?.map_err(|e| format!("{e:?}"))?;
     let mut out = Vec::new();
     for s in list.iter().filter(|s| s.waiting > 0) {
@@ -49,7 +49,7 @@ fn src(cell: &str, r: &Result<impl Sized, String>, ms: u32) -> Source {
 
 async fn round(st: &Arc<RwLock<State>>) {
     let t0 = Instant::now();
-    let b = tokio::time::timeout(Duration::from_secs(20), bundles()).await.unwrap_or_else(|_| Err("no answer in 20 s".into()));
+    let b = tokio::time::timeout(Duration::from_secs(60), bundles()).await.unwrap_or_else(|_| Err("no answer in 60 s".into()));
     let bms = t0.elapsed().as_millis() as u32;
     let t1 = Instant::now();
     let n = tokio::time::timeout(Duration::from_secs(12), needs()).await.unwrap_or_else(|_| Err("no answer in 12 s".into()));
