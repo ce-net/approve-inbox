@@ -1,0 +1,20 @@
+# One repo = one cell = one function. What waits for an approver, from grant.bundle and needs.list, row-filtered by
+# the caller's chain. Part of the APPROVALS cell system (repo:ce/docs/SITES-ON-CELLS.md section 5), not Foreman.
+[cell]
+api = "approve.inbox"
+crate = "approve-inbox"
+args = ["serve"]
+kind = "function"
+keep = true  # its background projection must keep running
+depends_on = []
+
+[launch]
+health = "HealthOp"
+start_timeout_ms = 5000
+restart_backoff_ms = [1000, 300000]
+
+[placement]
+# where it runs is the APPROVALS system in repo:apps-shell crates/ce-net-net (replicas 2), not this file
+
+[limits]
+disk_bytes = "64M"

@@ -1,0 +1,21 @@
+[package]
+name = "approve-inbox"
+version = "0.1.0"
+description = "The approve.inbox cell: what waits for an approver, row-filtered by the caller's chain"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "approve-inbox"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+approve-inbox-api = { path = "../approve-inbox-api" }
+ui-chain = { workspace = true }
+ce-wire = { workspace = true, features = ["server", "client"] }
+ce-gate = { workspace = true }
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros", "time", "sync"] }

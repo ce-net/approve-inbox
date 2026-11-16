@@ -1,0 +1,10 @@
+[package]
+name = "approve-inbox-api"
+version = "0.1.0"
+description = "approve.inbox@1: what waits for an approver (grant.bundle items, needs.list decisions), its Badge count and one bundle's card"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+ce-wire = { workspace = true, features = ["client"] }
