@@ -19,3 +19,16 @@ restart_backoff_ms = [1000, 300000]
 
 [limits]
 disk_bytes = "64M"
+
+[stamp]
+id = "cell:approve.inbox"
+kind = "cell"
+path = "cell.toml"
+updated_at = 2026-11-16T01:46:55Z
+version = "0.3"
+access = "public"
+canonical_of = []
+duplicate_of = ""
+owner = "foreman/lead"
+source_of_truth = "https://github.com/ce-net/approve-inbox"
+stale_after = 180
