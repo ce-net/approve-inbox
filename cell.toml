@@ -5,6 +5,7 @@ api = "approve.inbox"
 crate = "approve-inbox"
 args = ["serve"]
 kind = "function"
+owner = "foreman/lead"
 keep = true  # its background projection must keep running
 depends_on = []
 
