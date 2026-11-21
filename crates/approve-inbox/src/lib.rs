@@ -135,8 +135,20 @@ pub fn allowed(cv: &Caveats, requester: &str, kind: &str, owner: &str, node: &st
     cv.0.iter().all(|(k, vals)| field(k, requester, kind, owner, node).is_some_and(|v| vals.iter().any(|x| x == v)))
 }
 
+/// Names of test persons (scoped, ended after a test); a dry run's drafts sit in the test approval store for them.
+pub const TEST_PREFIXES: &[&str] = &["t-", "test-"];
+
+/// A test session: its chain is cut by `requester` to test persons only. Only such a chain is shown dry-run bundles;
+/// the owner (and any other chain, scoped or not) never is (repo:ce/docs/CRITICAL-DECISIONS-2026-11-21.md section 7:
+/// two thirds of the owner's rows were dry runs).
+pub fn test_session(cv: &Caveats) -> bool {
+    cv.0.get("requester").is_some_and(|v| !v.is_empty() && v.iter().all(|p| TEST_PREFIXES.iter().any(|t| p.starts_with(t))))
+}
+
 pub fn for_caveats(cv: &Caveats, q: &InboxQuery, rows: &[Pending]) -> Vec<Pending> {
+    let test = test_session(cv);
     rows.iter()
+        .filter(|r| !r.dry_run || test)
         .filter(|r| allowed(cv, &r.requester, &r.kind, &r.owner, &r.node))
         .filter(|r| q.about.as_ref().is_none_or(|a| &r.about == a))
         .filter(|r| q.kind.as_ref().is_none_or(|k| &r.kind == k))
@@ -150,6 +162,9 @@ pub fn for_caller(who: &ce_wire::Caller, q: &InboxQuery, rows: &[Pending]) -> Ve
 
 /// The card for a caller: only the items it may see; a bundle with none of them does not exist for it.
 pub fn card_for_caveats(cv: &Caveats, c: &CardView) -> Option<CardView> {
+    if c.dry_run && !test_session(cv) {
+        return None;
+    }
     let rows: Vec<CardRow> = c.rows.iter().filter(|r| allowed(cv, &r.requester, "grant", &r.owner, &r.node)).cloned().collect();
     (!rows.is_empty()).then(|| CardView { rows, ..c.clone() })
 }

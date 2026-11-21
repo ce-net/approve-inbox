@@ -30,7 +30,8 @@ fn only_waiting_items_are_pending() {
 fn a_requester_caveat_shows_only_its_own_rows() {
     let rows = bundle_rows(&bundle());
     let all = InboxQuery { about: None, kind: None };
-    assert_eq!(for_caveats(&Caveats::default(), &all, &rows).len(), 2, "unscoped: every row");
+    let live = live_rows();
+    assert_eq!(for_caveats(&Caveats::default(), &all, &live).len(), 2, "unscoped: every live row");
     let mine = for_caveats(&cv(&[("requester", &["t-approver"])]), &all, &rows);
     assert_eq!(mine.iter().map(|r| r.requester.as_str()).collect::<Vec<_>>(), ["t-approver"]);
     assert!(for_caveats(&cv(&[("requester", &[])]), &all, &rows).is_empty(), "a disjoint caveat hides every row");
@@ -49,7 +50,29 @@ fn a_card_shows_only_the_items_the_chain_may_see() {
 fn the_pending_slot_filters_by_what_it_is_about() {
     let rows = bundle_rows(&bundle());
     let q = InboxQuery { about: Some("node:leif-desk".into()), kind: None };
-    assert_eq!(for_caveats(&Caveats::default(), &q, &rows).len(), 2);
+    assert_eq!(for_caveats(&cv(&[("requester", &["t-approver"])]), &q, &rows).len(), 1);
+    assert_eq!(for_caveats(&Caveats::default(), &q, &live_rows()).len(), 2);
     let q = InboxQuery { about: Some("node:ops-1".into()), kind: None };
-    assert!(for_caveats(&Caveats::default(), &q, &rows).is_empty());
+    assert!(for_caveats(&Caveats::default(), &q, &live_rows()).is_empty());
+}
+
+fn live_rows() -> Vec<Pending> {
+    bundle_rows(&gb::Bundle { dry_run: false, ..bundle() })
+}
+
+#[test]
+fn dry_runs_reach_test_sessions_only() {
+    let rows = bundle_rows(&bundle());
+    let all = InboxQuery { about: None, kind: None };
+    // the owner (an unscoped chain, or one cut to a real person) never sees a dry run, row or card
+    assert!(for_caveats(&Caveats::default(), &all, &rows).is_empty());
+    assert!(for_caveats(&cv(&[("requester", &["leif"])]), &all, &rows).is_empty());
+    assert!(for_caveats(&cv(&[("requester", &["t-approver", "leif"])]), &all, &rows).is_empty(), "a mixed chain is not a test session");
+    assert!(card_for_caveats(&Caveats::default(), &card_of(&bundle())).is_none());
+    // a test session sees its own dry-run rows and card
+    assert_eq!(for_caveats(&cv(&[("requester", &["t-approver"])]), &all, &rows).len(), 1);
+    assert!(card_for_caveats(&cv(&[("requester", &["t-approver"])]), &card_of(&bundle())).is_some());
+    // live rows are unchanged
+    assert_eq!(for_caveats(&Caveats::default(), &all, &live_rows()).len(), 2);
+    assert!(card_for_caveats(&Caveats::default(), &card_of(&gb::Bundle { dry_run: false, ..bundle() })).is_some());
 }
